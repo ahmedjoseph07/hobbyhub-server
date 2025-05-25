@@ -28,6 +28,17 @@ async function run() {
         const db = client.db("hobby-hub");
         const groupCollection = db.collection("groups");
 
+        app.get('/all-groups/user/:email',async(req,res)=>{
+            const email = req.params.email;
+            try {
+                const groups = await groupCollection.find({userEmail:email}).toArray();
+                res.send(groups)
+            } catch (err) {
+                console.log(err)
+            }
+
+        })
+
         app.get('/all-groups',async(req,res)=>{
             try {
                 const groups = await groupCollection.find().toArray();
