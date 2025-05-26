@@ -95,7 +95,6 @@ async function run() {
                 console.log(err);
             }
         });
-
         app.post("/create-group", async (req, res) => {
             try {
                 const group = req.body;
@@ -113,6 +112,18 @@ async function run() {
                 console.log(err);
             }
         });
+
+        app.delete('/my-groups/:id',async(req,res)=>{
+            try {
+                const groupId = req.params.id;
+                const result = await groupCollection.deleteOne({_id: new ObjectId(groupId)})
+                if(result.deletedCount){
+                    return res.json({message:"Group deleted"})
+                }
+            } catch (err) {
+                console.log(err)
+            }
+        })
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
