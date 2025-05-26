@@ -5,7 +5,13 @@ const port = process.env.PORT || 3000;
 
 const app = express();
 
-app.use(cors());
+app.use(
+    cors({
+        origin: "https://hobby-hub-5915a.web.app",
+        methods: ["GET", "POST", "PUT", "DELETE"],
+        credentials: true,
+    })
+);
 app.use(express.json());
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
@@ -88,8 +94,8 @@ async function run() {
                     { $set: updatedData }
                 );
 
-                if(result.matchedCount){
-                    return res.json(updatedData)
+                if (result.matchedCount) {
+                    return res.json(updatedData);
                 }
             } catch (err) {
                 console.log(err);
@@ -111,17 +117,19 @@ async function run() {
             }
         });
 
-        app.delete('/my-groups/:id',async(req,res)=>{
+        app.delete("/my-groups/:id", async (req, res) => {
             try {
                 const groupId = req.params.id;
-                const result = await groupCollection.deleteOne({_id: new ObjectId(groupId)})
-                if(result.deletedCount){
-                    return res.json({message:"Group deleted"})
+                const result = await groupCollection.deleteOne({
+                    _id: new ObjectId(groupId),
+                });
+                if (result.deletedCount) {
+                    return res.json({ message: "Group deleted" });
                 }
             } catch (err) {
-                console.log(err)
+                console.log(err);
             }
-        })
+        });
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });

@@ -71,7 +71,7 @@ This is the backend server for the Hobby Hub application. It's built with **Node
     node index.js
     ```
 
-5. Visit `http://localhost:3000` to confirm it’s running.
+5. Visit `https://hobby-hub-server-flax.vercel.app` to confirm it’s running.
 
 ---
 
