@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.egi2zh7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -27,6 +27,19 @@ async function run() {
 
         const db = client.db("hobby-hub");
         const groupCollection = db.collection("groups");
+
+        app.get('/all-groups/:id',async(req,res)=>{
+            try {
+                const groupId = req.params.id;
+                const group = await groupCollection.findOne({_id: new ObjectId(groupId)})
+                if(!group){
+                    return res.json({message:"Group not found"})
+                }
+                res.json(group);
+            } catch (err) {
+                console.log(err)
+            }
+        })
 
         app.get('/all-groups/user/:email',async(req,res)=>{
             const email = req.params.email;
