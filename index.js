@@ -102,12 +102,10 @@ async function run() {
                     groupName: group.groupName,
                 });
                 if (existing) {
-                    console.log("Group already exists");
                     return res.json({ message: "Group already Exist" });
                 }
                 const result = await groupCollection.insertOne(group);
                 res.send(result);
-                console.log(group);
             } catch (err) {
                 console.log(err);
             }
