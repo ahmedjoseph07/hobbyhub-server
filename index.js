@@ -40,6 +40,18 @@ async function run() {
                 console.log(err)
             }
         })
+        app.get('/my-groups/:id',async(req,res)=>{
+            try {
+                const groupId = req.params.id
+                const group = await groupCollection.findOne({_id:new ObjectId(groupId)})
+                if(!group){
+                    return res.json({message:"Group not found"})
+                }
+                res.json(group);
+            } catch (err) {
+                console.log(err)
+            }
+        })
 
         app.get('/all-groups/user/:email',async(req,res)=>{
             const email = req.params.email;
