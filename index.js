@@ -28,58 +28,83 @@ async function run() {
         const db = client.db("hobby-hub");
         const groupCollection = db.collection("groups");
 
-        app.get('/all-groups/:id',async(req,res)=>{
+        app.get("/all-groups/:id", async (req, res) => {
             try {
                 const groupId = req.params.id;
-                const group = await groupCollection.findOne({_id: new ObjectId(groupId)})
-                if(!group){
-                    return res.json({message:"Group not found"})
+                const group = await groupCollection.findOne({
+                    _id: new ObjectId(groupId),
+                });
+                if (!group) {
+                    return res.json({ message: "Group not found" });
                 }
                 res.json(group);
             } catch (err) {
-                console.log(err)
+                console.log(err);
             }
-        })
-        app.get('/my-groups/:id',async(req,res)=>{
-            try {
-                const groupId = req.params.id
-                const group = await groupCollection.findOne({_id:new ObjectId(groupId)})
-                if(!group){
-                    return res.json({message:"Group not found"})
-                }
-                res.json(group);
-            } catch (err) {
-                console.log(err)
-            }
-        })
+        });
 
-        app.get('/all-groups/user/:email',async(req,res)=>{
+        app.get("/my-groups/:id", async (req, res) => {
+            try {
+                const groupId = req.params.id;
+                const group = await groupCollection.findOne({
+                    _id: new ObjectId(groupId),
+                });
+                if (!group) {
+                    return res.json({ message: "Group not found" });
+                }
+                res.json(group);
+            } catch (err) {
+                console.log(err);
+            }
+        });
+
+        app.get("/all-groups/user/:email", async (req, res) => {
             const email = req.params.email;
             try {
-                const groups = await groupCollection.find({userEmail:email}).toArray();
-                res.send(groups)
+                const groups = await groupCollection
+                    .find({ userEmail: email })
+                    .toArray();
+                res.send(groups);
             } catch (err) {
-                console.log(err)
+                console.log(err);
             }
+        });
 
-        })
-
-        app.get('/all-groups',async(req,res)=>{
+        app.get("/all-groups", async (req, res) => {
             try {
                 const groups = await groupCollection.find().toArray();
-                res.send(groups)
+                res.send(groups);
             } catch (err) {
-                console.log(err)
+                console.log(err);
             }
-        })
+        });
+
+        app.put("/my-groups/:id", async (req, res) => {
+            try {
+                const groupId = req.params.id;
+                const updatedData = req.body;
+                const result = await groupCollection.updateOne(
+                    { _id: new ObjectId(groupId) },
+                    { $set: updatedData }
+                );
+
+                if(result.matchedCount){
+                    return res.json(updatedData)
+                }
+            } catch (err) {
+                console.log(err);
+            }
+        });
 
         app.post("/create-group", async (req, res) => {
             try {
                 const group = req.body;
-                const existing = await groupCollection.findOne({groupName:group.groupName})
-                if(existing){
-                    console.log("Group already exists")
-                    return res.json({message:"Group already Exist"})
+                const existing = await groupCollection.findOne({
+                    groupName: group.groupName,
+                });
+                if (existing) {
+                    console.log("Group already exists");
+                    return res.json({ message: "Group already Exist" });
                 }
                 const result = await groupCollection.insertOne(group);
                 res.send(result);
