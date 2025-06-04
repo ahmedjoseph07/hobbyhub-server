@@ -34,105 +34,6 @@ async function run() {
         const db = client.db("hobby-hub");
         const groupCollection = db.collection("groups");
 
-            app.get("/all-groups", async (req, res) => {
-            try {
-                const groups = await groupCollection.find().toArray();
-                res.send(groups);
-            } catch (err) {
-                console.log(err);
-            }
-        });
-
-        app.get("/all-groups/:id", async (req, res) => {
-            try {
-                const groupId = req.params.id;
-                const group = await groupCollection.findOne({
-                    _id: new ObjectId(groupId),
-                });
-                if (!group) {
-                    return res.json({ message: "Group not found" });
-                }
-                res.json(group);
-            } catch (err) {
-                console.log(err);
-            }
-        });
-
-        app.get("/my-groups/:id", async (req, res) => {
-            try {
-                const groupId = req.params.id;
-                const group = await groupCollection.findOne({
-                    _id: new ObjectId(groupId),
-                });
-                if (!group) {
-                    return res.json({ message: "Group not found" });
-                }
-                res.json(group);
-            } catch (err) {
-                console.log(err);
-            }
-        });
-
-        app.get("/all-groups/user/:email", async (req, res) => {
-            const email = req.params.email;
-            try {
-                const groups = await groupCollection
-                    .find({ userEmail: email })
-                    .toArray();
-                res.send(groups);
-            } catch (err) {
-                console.log(err);
-            }
-        });
-
-    
-
-        app.put("/my-groups/:id", async (req, res) => {
-            try {
-                const groupId = req.params.id;
-                const updatedData = req.body;
-                const result = await groupCollection.updateOne(
-                    { _id: new ObjectId(groupId) },
-                    { $set: updatedData }
-                );
-                
-                if (result.matchedCount) {
-                    return res.json(updatedData);
-                }
-            } catch (err) {
-                console.log(err);
-            }
-        });
-        app.post("/create-group", async (req, res) => {
-            try {
-                const group = req.body;
-                const existing = await groupCollection.findOne({
-                    groupName: group.groupName,
-                });
-                if (existing) {
-                    return res.json({ message: "Group already Exist" });
-                }
-                const result = await groupCollection.insertOne(group);
-                res.send(result);
-            } catch (err) {
-                console.log(err);
-            }
-        });
-
-        app.delete("/my-groups/:id", async (req, res) => {
-            try {
-                const groupId = req.params.id;
-                const result = await groupCollection.deleteOne({
-                    _id: new ObjectId(groupId),
-                });
-                if (result.deletedCount) {
-                    return res.json({ message: "Group deleted" });
-                }
-            } catch (err) {
-                console.log(err);
-            }
-        });
-
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log(
@@ -144,6 +45,103 @@ async function run() {
     }
 }
 run().catch(console.dir);
+
+app.get("/all-groups", async (req, res) => {
+    try {
+        const groups = await groupCollection.find().toArray();
+        res.send(groups);
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+app.get("/all-groups/:id", async (req, res) => {
+    try {
+        const groupId = req.params.id;
+        const group = await groupCollection.findOne({
+            _id: new ObjectId(groupId),
+        });
+        if (!group) {
+            return res.json({ message: "Group not found" });
+        }
+        res.json(group);
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+app.get("/my-groups/:id", async (req, res) => {
+    try {
+        const groupId = req.params.id;
+        const group = await groupCollection.findOne({
+            _id: new ObjectId(groupId),
+        });
+        if (!group) {
+            return res.json({ message: "Group not found" });
+        }
+        res.json(group);
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+app.get("/all-groups/user/:email", async (req, res) => {
+    const email = req.params.email;
+    try {
+        const groups = await groupCollection
+            .find({ userEmail: email })
+            .toArray();
+        res.send(groups);
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+app.put("/my-groups/:id", async (req, res) => {
+    try {
+        const groupId = req.params.id;
+        const updatedData = req.body;
+        const result = await groupCollection.updateOne(
+            { _id: new ObjectId(groupId) },
+            { $set: updatedData }
+        );
+
+        if (result.matchedCount) {
+            return res.json(updatedData);
+        }
+    } catch (err) {
+        console.log(err);
+    }
+});
+app.post("/create-group", async (req, res) => {
+    try {
+        const group = req.body;
+        const existing = await groupCollection.findOne({
+            groupName: group.groupName,
+        });
+        if (existing) {
+            return res.json({ message: "Group already Exist" });
+        }
+        const result = await groupCollection.insertOne(group);
+        res.send(result);
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+app.delete("/my-groups/:id", async (req, res) => {
+    try {
+        const groupId = req.params.id;
+        const result = await groupCollection.deleteOne({
+            _id: new ObjectId(groupId),
+        });
+        if (result.deletedCount) {
+            return res.json({ message: "Group deleted" });
+        }
+    } catch (err) {
+        console.log(err);
+    }
+});
 
 app.get("/", (req, res) => {
     res.send("Hello");
