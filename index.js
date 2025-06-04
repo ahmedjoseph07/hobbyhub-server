@@ -1,9 +1,10 @@
 const express = require("express");
 require("dotenv").config();
 const cors = require("cors");
-const port = process.env.PORT || 3000;
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const app = express();
+const port = process.env.PORT || 3000;
 
 app.use(
     cors({
@@ -12,12 +13,13 @@ app.use(
         credentials: true,
     })
 );
+
 app.use(express.json());
 
-const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+let groupCollection;
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.egi2zh7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
     serverApi: {
         version: ServerApiVersion.v1,
@@ -28,125 +30,99 @@ const client = new MongoClient(uri, {
 
 async function run() {
     try {
-        // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
-
         const db = client.db("hobby-hub");
-        const groupCollection = db.collection("groups");
-
-        // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
-        console.log(
-            "Pinged your deployment. You successfully connected to MongoDB!"
-        );
-    } finally {
-        // Ensures that the client will close when you finish/error
-        // await client.close();
+        groupCollection = db.collection("groups");
+        await db.command({ ping: 1 });
+        console.log("Connected to DB");
+    } catch (err) {
+        console.error("MongoDB connection failed:", err);
     }
 }
 run().catch(console.dir);
 
+app.get("/", (req, res) => {
+    res.send("🚀 Hobby Hub Server is running!");
+});
+
 app.get("/all-groups", async (req, res) => {
     try {
         const groups = await groupCollection.find().toArray();
-        res.send(groups);
+        res.json(groups);
     } catch (err) {
-        console.log(err);
+        console.error(err);
+        res.status(500).json({ message: "Internal Server Error" });
     }
 });
 
 app.get("/all-groups/:id", async (req, res) => {
     try {
-        const groupId = req.params.id;
-        const group = await groupCollection.findOne({
-            _id: new ObjectId(groupId),
-        });
-        if (!group) {
-            return res.json({ message: "Group not found" });
-        }
+        const group = await groupCollection.findOne({ _id: new ObjectId(req.params.id) });
+        if (!group) return res.status(404).json({ message: "Group not found" });
         res.json(group);
     } catch (err) {
-        console.log(err);
-    }
-});
-
-app.get("/my-groups/:id", async (req, res) => {
-    try {
-        const groupId = req.params.id;
-        const group = await groupCollection.findOne({
-            _id: new ObjectId(groupId),
-        });
-        if (!group) {
-            return res.json({ message: "Group not found" });
-        }
-        res.json(group);
-    } catch (err) {
-        console.log(err);
+        console.error(err);
+        res.status(500).json({ message: "Internal Server Error" });
     }
 });
 
 app.get("/all-groups/user/:email", async (req, res) => {
-    const email = req.params.email;
     try {
-        const groups = await groupCollection
-            .find({ userEmail: email })
-            .toArray();
-        res.send(groups);
+        const groups = await groupCollection.find({ userEmail: req.params.email }).toArray();
+        res.json(groups);
     } catch (err) {
-        console.log(err);
+        console.error(err);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
+app.post("/create-group", async (req, res) => {
+    try {
+        const group = req.body;
+        const existing = await groupCollection.findOne({ groupName: group.groupName });
+        if (existing) return res.status(409).json({ message: "Group already exists" });
+
+        const result = await groupCollection.insertOne(group);
+        res.status(201).json(result);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Internal Server Error" });
     }
 });
 
 app.put("/my-groups/:id", async (req, res) => {
     try {
-        const groupId = req.params.id;
-        const updatedData = req.body;
         const result = await groupCollection.updateOne(
-            { _id: new ObjectId(groupId) },
-            { $set: updatedData }
+            { _id: new ObjectId(req.params.id) },
+            { $set: req.body }
         );
-
-        if (result.matchedCount) {
-            return res.json(updatedData);
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ message: "Group not found" });
         }
+        res.json({ message: "Group updated", updatedData: req.body });
     } catch (err) {
-        console.log(err);
-    }
-});
-app.post("/create-group", async (req, res) => {
-    try {
-        const group = req.body;
-        const existing = await groupCollection.findOne({
-            groupName: group.groupName,
-        });
-        if (existing) {
-            return res.json({ message: "Group already Exist" });
-        }
-        const result = await groupCollection.insertOne(group);
-        res.send(result);
-    } catch (err) {
-        console.log(err);
+        console.error(err);
+        res.status(500).json({ message: "Internal Server Error" });
     }
 });
 
 app.delete("/my-groups/:id", async (req, res) => {
     try {
-        const groupId = req.params.id;
-        const result = await groupCollection.deleteOne({
-            _id: new ObjectId(groupId),
-        });
-        if (result.deletedCount) {
-            return res.json({ message: "Group deleted" });
+        const result = await groupCollection.deleteOne({ _id: new ObjectId(req.params.id) });
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ message: "Group not found" });
         }
+        res.json({ message: "Group deleted" });
     } catch (err) {
-        console.log(err);
+        console.error(err);
+        res.status(500).json({ message: "Internal Server Error" });
     }
 });
 
-app.get("/", (req, res) => {
-    res.send("Hello");
+app.use((req, res) => {
+    res.status(404).json({ message: "Route not found" });
 });
 
 app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+    console.log(`Server running on http://localhost:${port}`);
 });
