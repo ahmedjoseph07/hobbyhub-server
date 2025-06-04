@@ -34,6 +34,15 @@ async function run() {
         const db = client.db("hobby-hub");
         const groupCollection = db.collection("groups");
 
+            app.get("/all-groups", async (req, res) => {
+            try {
+                const groups = await groupCollection.find().toArray();
+                res.send(groups);
+            } catch (err) {
+                console.log(err);
+            }
+        });
+
         app.get("/all-groups/:id", async (req, res) => {
             try {
                 const groupId = req.params.id;
@@ -76,14 +85,7 @@ async function run() {
             }
         });
 
-        app.get("/all-groups", async (req, res) => {
-            try {
-                const groups = await groupCollection.find().toArray();
-                res.send(groups);
-            } catch (err) {
-                console.log(err);
-            }
-        });
+    
 
         app.put("/my-groups/:id", async (req, res) => {
             try {
@@ -93,7 +95,7 @@ async function run() {
                     { _id: new ObjectId(groupId) },
                     { $set: updatedData }
                 );
-
+                
                 if (result.matchedCount) {
                     return res.json(updatedData);
                 }
